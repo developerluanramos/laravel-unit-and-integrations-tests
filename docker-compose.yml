@@ -1,0 +1,58 @@
+version: "3.7"
+services:
+    # imagem micro 01
+    app_laratests:
+        build:
+            args:
+                user: luanramos
+                uid: 1000
+            context: ./
+            dockerfile: Dockerfile
+        image: laravel-app
+        restart: unless-stopped
+        working_dir: /var/www/
+        volumes:
+            - ./:/var/www
+        depends_on:
+            - redis_laratests
+        networks:
+            - laratests_network
+    # nginx
+    nginx:
+        image: nginx:alpine
+        restart: unless-stopped
+        ports:
+            - 8010:80
+            - 443:443
+        volumes:
+            - ./:/var/www
+            - ./docker/nginx/:/etc/nginx/conf.d/
+        networks:
+            - laratests_network
+
+    # mysql micro 01
+    db_laratests:
+        image: mysql
+        platform: linux/arm64/v8
+        restart: unless-stopped
+        expose:
+            - 3306
+        environment:
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_DATABASE: ${DB_DATABASE}
+        volumes:
+            - /var/lib/mysql
+        ports:
+            - 3308:3306
+        networks:
+            - laratests_network
+
+    #redis_shorts
+    redis_laratests:
+        image: redis:latest
+        networks:
+            - laratests_network
+
+networks:
+    laratests_network:
+        driver: bridge
